@@ -31,6 +31,7 @@ const ws_1 = __importStar(require("ws"));
 const dotenv_1 = __importDefault(require("dotenv"));
 const cors_1 = __importDefault(require("cors"));
 const url_1 = __importDefault(require("url"));
+const db_1 = __importDefault(require("./db/db"));
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 app.use(express_1.default.json());
@@ -39,6 +40,7 @@ const httpServer = app.listen(8000, () => {
     console.log(`Server is running on port ${PORT}`);
 });
 const PORT = process.env.PORT || 8000;
+(0, db_1.default)();
 const wss = new ws_1.WebSocketServer({ server: httpServer });
 const rooms = new Map();
 wss.on("connection", function connection(ws, req) {
@@ -49,23 +51,25 @@ wss.on("connection", function connection(ws, req) {
     console.log("Type received : ", type);
     if (type === 'create') {
         if (!rooms.has(roomId)) {
+            console.log("Entered Create");
             rooms.set(roomId, new Set());
         }
     }
     if (type === 'join') {
         if (!rooms.has(roomId)) {
+            console.log("Entered join");
             return ws.send(JSON.stringify({ type: 'error', message: 'Room does not exist' }));
         }
     }
     const room = rooms.get(roomId);
+    console.log("All rooms : ", rooms.keys());
+    // console.log("Current Room values : ",room);
     room.add(ws);
-    console.log(rooms);
     ws.on('error', console.error);
-    ws.on('message', (data) => {
+    ws.on('message', (data, isBinary) => {
         room.forEach((client) => {
             if (client !== ws && client.readyState === ws_1.default.OPEN) {
-                console.log("Data : ", data);
-                // client.send(data);
+                client.send(data, { binary: isBinary });
             }
         });
     });

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { useSearchParams } from 'next/navigation'
 import { useRouter } from 'next/navigation';
+import Whiteboard from "./Whiteboard";
 export default function Room() {
     const [socket,setSocket] = useState<WebSocket | null>(null)
     const searchParams = useSearchParams()
@@ -11,6 +12,7 @@ export default function Room() {
     const router = useRouter()
 
     useEffect(() =>{
+        if (!roomId || !typeOfReq) return;
         const newSocket = new WebSocket(`ws://localhost:8000?roomId=${roomId}&type=${typeOfReq}`)
 
         newSocket.onopen = () =>{
@@ -32,10 +34,15 @@ export default function Room() {
         setSocket(newSocket)
         
         return () => newSocket.close();
-    },[])
+    }, [roomId, typeOfReq]);
+
+    if (!roomId) {
+        return <div>Loading...</div>;
+    }
   return (
     <div>
         <h1>Room ID : {socket?roomId: "Not Connected"}</h1>
+        {/* <Whiteboard roomId={roomId}/> */}
     </div>
   )
 }
