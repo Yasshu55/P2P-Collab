@@ -4,19 +4,20 @@ import { useState } from "react";
 
 export default function ClientSignIn() {
     const router = useRouter()
-    const [email,setEmail] = useState("user123@gmail.com")
-    const [password,setPassword] = useState("user123")
+    const [email,setEmail] = useState("yash@gmail.com")
+    const [password,setPassword] = useState("1234")
 
     async function submitHandler(e : any){
       e.preventDefault()
       try {
         console.log("Email : ",email," Password : ",password);
         
-        const response = await fetch("http://localhost:8000/sign-in",{
+        const response = await fetch("http://localhost:8000/api/sign-in",{
           method : "POST",
           headers : {"Content-Type" : "application/json"},
-          body : JSON.stringify({email: email,password : password})
-        })
+          body : JSON.stringify({email: email,password : password}),
+          credentials: 'include',
+        },)
 
         if(!response){
           throw new Error("Error Occured")
@@ -24,9 +25,9 @@ export default function ClientSignIn() {
 
         const data = await response.json()
         console.log(data)
+        router.push("/createRoom")
       } catch (error) {
         console.log(error);
-        
       }
     }
 
@@ -35,8 +36,8 @@ export default function ClientSignIn() {
     <div>
       <h1>Sign In</h1>
       <form onSubmit={submitHandler}>
-        <input type="text" placeholder="Email" defaultValue="user123@gmail.com" onChange={(e) => setEmail(e.target.value)} />
-        <input type="text" placeholder="Password" defaultValue="user123" onChange={(e) => setPassword(e.target.value)} />
+        <input type="text" placeholder="Email" defaultValue="yash@gmail.com" onChange={(e) => setEmail(e.target.value)} />
+        <input type="text" placeholder="Password" defaultValue="1234" onChange={(e) => setPassword(e.target.value)} />
         <button type="submit">Sign In</button>
       </form>
     </div>

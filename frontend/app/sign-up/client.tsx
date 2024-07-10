@@ -18,18 +18,24 @@ export default function ClientSignUp() {
             return alert("Password and re-enter password are not same")
         }
         
-        // const response = await fetch("http://localhost:8000/sign-in",{
-        //   method : "POST",
-        //   headers : {"Content-Type" : "application/json"},
-        //   body : JSON.stringify({email: email,password : password})
-        // })
+        const response = await fetch("http://localhost:8000/api/sign-up",{
+          method : "POST",
+          headers : {"Content-Type" : "application/json"},
+          body : JSON.stringify({
+            username : username,
+            email: email,
+            password : password
+          })
+        })
 
-        // if(!response){
-        //   throw new Error("Error Occured")
-        // }
+        if(!response){
+          throw new Error("Error Occured")
+        }
         
-        // const data = await response.json()
-        // console.log(data)
+        const data = await response.json()
+        console.log(data)
+        alert("Successfully account is created!")
+        router.push('/sign-in')
       } catch (error) {
         console.log(error);
       }
@@ -50,7 +56,7 @@ export default function ClientSignUp() {
         <input type="radio" />
         <label>Female</label>
         <br />
-        <button className="" type="submit">Sign In</button>
+        <button className="" type="submit">Sign Up</button>
       </form>
     </div>
   )

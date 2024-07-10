@@ -2,43 +2,31 @@
 
 import { useEffect, useState } from "react"
 import { useSearchParams } from 'next/navigation'
-import { useRouter } from 'next/navigation';
 import Whiteboard from "./Whiteboard";
+import { useWebSocket } from "./WebSocketProvider";
 export default function Room() {
-    const [socket,setSocket] = useState<WebSocket | null>(null)
+    const {socket} = useWebSocket()
     const searchParams = useSearchParams()
-    const typeOfReq = searchParams.get("type");
-    const roomId = searchParams.get("roomId");
-    const router = useRouter()
+    const [roomId,setRoomId] = useState<string | null>(null)
+    const [isConnecting, setIsConnecting] = useState(true)
 
-    useEffect(() =>{
-        if (!roomId || !typeOfReq) return;
-        const newSocket = new WebSocket(`ws://localhost:8000?roomId=${roomId}&type=${typeOfReq}`)
+    useEffect(() => {
+        const paramsRoomId = searchParams.get("roomId");
+        console.log("Current socket state:", socket ? "Connected" : "Not connected");
+        setRoomId(paramsRoomId);
 
-        newSocket.onopen = () =>{
-            console.log("Connection is Established! : ", roomId);
-            newSocket.send("Hello Server! This is the room ID : "+roomId)
+        if (socket) {
+          setIsConnecting(false);
         }
-
-        newSocket.onmessage = (message) =>{
-            const data = JSON.parse(message.data);
-            console.log("type : ", data.type)
-            console.log("message :",message.data.message)
-
-            if(data.type === 'error'){
-                router.push('/error')
-            }
-            console.log("Message Received : ",message.data)
-        }
-
-        setSocket(newSocket)
-        
-        return () => newSocket.close();
-    }, [roomId, typeOfReq]);
+    }, [searchParams,socket]);
 
     if (!roomId) {
         return <div>Loading...</div>;
-    }
+     }
+
+    if (isConnecting) {
+      return <div>Connecting to room...</div>;
+     }
   return (
     <div>
         <h1>Room ID : {socket?roomId: "Not Connected"}</h1>

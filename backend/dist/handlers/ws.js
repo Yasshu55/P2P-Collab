@@ -34,41 +34,35 @@ const handleWebSocket = (server) => {
     const wss = new ws_1.WebSocketServer({ server });
     wss.on("connection", (ws, req) => {
         const parameters = url_1.default.parse(req.url, true).query;
-        const { roomId, type } = parameters;
+        const { roomId } = parameters;
         if (!roomId) {
-            return ws.send(JSON.stringify({ type: 'error', message: 'Invalid room ID' }));
+            ws.send(JSON.stringify({ type: 'error', message: 'Room ID is required' }));
+            ws.close();
+            return;
         }
-        if (!type) {
-            return ws.send(JSON.stringify({ type: 'error', message: 'Invalid type, either create a room or join' }));
-        }
-        console.log("Room ID received:", roomId);
-        console.log("Type received:", type);
-        if (type === 'create' && !rooms.has(roomId)) {
-            console.log("Entered Create");
+        if (!rooms.has(roomId)) {
             rooms.set(roomId, new Set());
         }
-        else if (type === 'join') {
-            if (!rooms.has(roomId)) {
-                console.log("Entered join");
-                return ws.send(JSON.stringify({ type: 'error', message: 'Room does not exist' }));
-            }
-        }
-        else {
-            return ws.send(JSON.stringify({ type: 'error', message: 'Invalid operation type' }));
-        }
-        const room = rooms.get(roomId);
-        room.add(ws);
-        ws.on('error', console.error);
-        ws.on('message', (data, isBinary) => {
-            room.forEach(client => {
-                if (client !== ws && client.readyState === ws_1.default.OPEN) {
-                    client.send(data, { binary: isBinary });
+        const currentRoom = rooms.get(roomId);
+        currentRoom.add({ ws });
+        console.log(`Client connected to room: ${roomId}`);
+        ws.on('message', (message) => {
+            console.log(`Received message in room ${roomId}: `, message.toString());
+            currentRoom === null || currentRoom === void 0 ? void 0 : currentRoom.forEach(client => {
+                if (client.ws !== ws && client.ws.readyState === ws_1.default.OPEN) {
+                    client.ws.send(message);
                 }
             });
         });
+        ws.on('error', console.error);
         ws.on('close', () => {
-            room.delete(ws);
-            if (room.size === 0) {
+            console.log(`Client disconnected from room: ${roomId}`);
+            currentRoom.forEach(client => {
+                if (client.ws === ws) {
+                    currentRoom.delete(client);
+                }
+            });
+            if (currentRoom.size === 0) {
                 rooms.delete(roomId);
             }
         });

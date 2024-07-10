@@ -6,34 +6,56 @@ import { useRouter } from 'next/navigation';
 export default function ClientCreateRoom() {
   const[roomId,setRoomId] = useState("");
   const router = useRouter()
-  let type = null;
   
 
-  function createRoomHandler(){
+  async function createRoomHandler(){
     try {
-        type = "create"
-        const roomID = uuidv4(); 
-        console.log(roomID);
-        setRoomId(roomID)
+        const newRoomId = uuidv4(); 
+        console.log(newRoomId);
+        setRoomId(newRoomId)
 
+        const res = await fetch('http://localhost:8000/api/create-room',{
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({roomId : newRoomId}),
+          credentials: 'include',
+        })
+
+        if(!res.ok){
+          throw new Error("Error Occured")
+        }
+        const data = await res.json()
+
+        console.log("Created the room  : ",data);
+        
+        
         const url = new URL('/room', window.location.href);
-        url.searchParams.append('roomId', roomID);
-        url.searchParams.append('type', type);
+        url.searchParams.append('roomId', newRoomId);
         router.push(url.toString());
     } catch (error) {
       console.log(error);
     }
   }
 
-  function joinRoomHandler(e : any){
+  async function joinRoomHandler(e : any){
     e.preventDefault();
     try {
       if(roomId){
-        type = "join"
+        const res = await fetch('http://localhost:8000/api/join-room',{
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            roomId : roomId
+          }),
+          credentials: 'include',
+        })
+
+        if(!res.ok){
+          throw new Error("Error Occured")
+        }
+        const data = await res.json()
         const url = new URL('/room', window.location.href);
         url.searchParams.append('roomId', roomId);
-        url.searchParams.append('type', type);
-    
         router.push(url.toString());
       }
     } catch (error) {
